@@ -1,0 +1,117 @@
+-- ============================================
+-- SISTEMA DE GESTIÓN DE CAFETERÍA (SGC)
+-- Script de creación de base de datos - MySQL
+-- ============================================
+
+USE sgc_cafeteria;
+ 
+-- ============================================
+-- TABLA: categorias
+-- ============================================
+CREATE TABLE categorias (
+    id          BIGINT          NOT NULL AUTO_INCREMENT,
+    nombre      VARCHAR(100)    NOT NULL,
+    descripcion VARCHAR(255),
+    PRIMARY KEY (id)
+);
+ 
+-- ============================================
+-- TABLA: usuarios
+-- ============================================
+CREATE TABLE usuarios (
+    id               BIGINT          NOT NULL AUTO_INCREMENT,
+    nombre           VARCHAR(100)    NOT NULL,
+    correo           VARCHAR(100)    NOT NULL UNIQUE,
+    contrasena       VARCHAR(255)    NOT NULL,
+    rol              ENUM('ADMIN', 'USUARIO') NOT NULL DEFAULT 'USUARIO',
+    fecha_registro   DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id)
+);
+ 
+-- ============================================
+-- TABLA: productos
+-- ============================================
+CREATE TABLE productos (
+    id           BIGINT          NOT NULL AUTO_INCREMENT,
+    nombre       VARCHAR(100)    NOT NULL,
+    descripcion  VARCHAR(255),
+    precio       DECIMAL(10, 2)  NOT NULL,
+    imagen_url   VARCHAR(255),
+    disponible   BOOLEAN         NOT NULL DEFAULT TRUE,
+    categoria_id BIGINT          NOT NULL,
+    PRIMARY KEY (id),
+    CONSTRAINT fk_producto_categoria
+        FOREIGN KEY (categoria_id) REFERENCES categorias(id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+);
+ 
+-- ============================================
+-- TABLA: reservas
+-- ============================================
+CREATE TABLE reservas (
+    id            BIGINT       NOT NULL AUTO_INCREMENT,
+    usuario_id    BIGINT       NOT NULL,
+    fecha         DATE         NOT NULL,
+    hora          TIME         NOT NULL,
+    num_personas  INT          NOT NULL,
+    estado        ENUM('PENDIENTE', 'CONFIRMADA', 'CANCELADA') NOT NULL DEFAULT 'PENDIENTE',
+    observaciones VARCHAR(255),
+    PRIMARY KEY (id),
+    CONSTRAINT fk_reserva_usuario
+        FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+);
+ 
+-- ============================================
+-- TABLA: facturas
+-- ============================================
+CREATE TABLE facturas (
+    id          BIGINT         NOT NULL AUTO_INCREMENT,
+    usuario_id  BIGINT         NOT NULL,
+    fecha       DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    total       DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+    estado      ENUM('PENDIENTE', 'PAGADA') NOT NULL DEFAULT 'PENDIENTE',
+    PRIMARY KEY (id),
+    CONSTRAINT fk_factura_usuario
+        FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+);
+ 
+-- ============================================
+-- TABLA: detalle_factura
+-- ============================================
+CREATE TABLE detalle_factura (
+    id               BIGINT         NOT NULL AUTO_INCREMENT,
+    factura_id       BIGINT         NOT NULL,
+    producto_id      BIGINT         NOT NULL,
+    cantidad         INT            NOT NULL,
+    precio_unitario  DECIMAL(10, 2) NOT NULL,
+    subtotal         DECIMAL(10, 2) NOT NULL,
+    PRIMARY KEY (id),
+    CONSTRAINT fk_detalle_factura
+        FOREIGN KEY (factura_id) REFERENCES facturas(id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT fk_detalle_producto
+        FOREIGN KEY (producto_id) REFERENCES productos(id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+);
+-- ============================================
+-- INSERT: categorias
+-- ============================================
+INSERT INTO categorias (nombre, descripcion) VALUES
+('Cappuccinos', 'Variedad de cappuccinos artesanales.');
+ 
+-- ============================================
+-- INSERT: productos (categoria_id = 1 -> Cappuccinos)
+-- ============================================
+INSERT INTO productos (nombre, descripcion, precio, imagen_url, disponible, categoria_id) VALUES
+('Cappuccino tradicional', 'Delicioso cappuccino tradicional ideal para cualquier momento.', 6000.00, 'IMG2/cappuccino_tradicional', TRUE, 1),
+('Cappuccino macadamia',   'Delicioso cappuccino macadamia ideal para cualquier momento.',  7000.00, 'IMG2/cappuccino_macadamia',   TRUE, 1),
+('Cappuccino caramelo',    'Delicioso cappuccino caramelo ideal para cualquier momento.',   7000.00, 'IMG2/cappuccino_caramelo',    TRUE, 1),
+('Cappuccino vainilla',    'Delicioso cappuccino vainilla ideal para cualquier momento.',   7000.00, 'IMG2/cappuccino_vainilla',    TRUE, 1),
+('Cappuccino coco',        'Delicioso cappuccino coco ideal para cualquier momento.',       7000.00, 'IMG2/cappuccino_coco',        TRUE, 1);
